@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>usaspend</title>
+    <style>
+      body { font-family: system-ui, Arial, sans-serif; margin: 20px; }
+      header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+      h1 { font-size: 1.25rem; margin: 0; }
+      form.inline { display: inline-flex; gap: 8px; align-items: center; }
+      input, select { padding: 6px 8px; }
+      button { padding: 6px 10px; cursor: pointer; }
+      table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+      th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+      th { background: #f7f7f7; }
+      .muted { color: #666; font-size: 0.9em; }
+      .status-success { color: #0a0; font-weight: 600; }
+      .status-failed { color: #a00; font-weight: 600; }
+      .msg { background: #eef9ff; border: 1px solid #b6e0fe; padding: 8px 10px; margin: 10px 0; }
+      .row { display: grid; grid-template-columns: 1fr; gap: 24px; }
+      @media (min-width: 900px) { .row { grid-template-columns: 2fr 1fr; } }
+      .card { border: 1px solid #ddd; padding: 12px; border-radius: 4px; }
+      .card h2 { margin-top: 0; font-size: 1.1rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>usaspend – Funding Data Harvester</h1>
+      <form class="inline" action="/run" method="post">
+        <label>Sources</label>
+        <input name="sources" value="usaspending" />
+        <label>Window (years)</label>
+        <input name="window_years" type="number" value="1" min="1" max="10" />
+        <button type="submit">Run Now</button>
+      </form>
+    </header>
+    {% if message %}<div class="msg">{{ message }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </body>
+  </html>
+

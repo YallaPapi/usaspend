@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row">
+    <div class="card">
+      <h2>Recent Events</h2>
+      <form class="inline" method="get">
+        <input type="text" name="q" placeholder="Company contains…" value="{{ filters.q }}" />
+        <input type="text" name="source" placeholder="Source (e.g., usaspending)" value="{{ filters.source }}" />
+        <input type="text" name="funding_type" placeholder="Funding type (e.g., US_CONTRACT)" value="{{ filters.funding_type }}" />
+        <button type="submit">Filter</button>
+      </form>
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Country</th>
+            <th>Funding Type</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+            <tr>
+              <td>{{ e['name'] }}</td>
+              <td class="muted">{{ e['country'] or '' }}</td>
+              <td>{{ e['funding_type'] or '' }}</td>
+              <td>{{ '{:,.0f}'.format(e['amount']) if e['amount'] is not none else '' }}</td>
+              <td>{{ e['date'] }}</td>
+              <td class="muted">{{ e['source'] }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="muted">No events yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Recent Runs</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Source</th>
+            <th>Status</th>
+            <th>Fetched</th>
+            <th>Normalized</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in runs %}
+            <tr>
+              <td>{{ r['id'] }}</td>
+              <td>{{ r['source'] }}</td>
+              <td class="status-{{ 'success' if r['status']=='success' else 'failed' }}">{{ r['status'] }}</td>
+              <td class="muted">{{ r['records_fetched'] }}</td>
+              <td class="muted">{{ r['records_normalized'] }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="muted">No runs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="muted">New runs appear here when finished.</p>
+    </div>
+  </div>
+{% endblock %}
+

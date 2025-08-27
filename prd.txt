@@ -1,0 +1,103 @@
+Got it — here’s a structured **PRD** (Product Requirements Document) for a system that automatically scrapes/ingests publicly available data about companies that have received funding in the past 3 years, normalizes it, and gives you a usable export for outreach.
+
+---
+
+# 📄 PRD: **Funding Data Harvester**
+
+## 1. Objective
+
+Build a system that automatically collects and unifies **publicly available funding data** from multiple open data sources (SEC Form D, USAspending, SBIR/STTR, EU CORDIS, selected RSS news feeds) covering the last **3 years**. Output should be a **clean, deduplicated company dataset** ready for lead-gen enrichment (e.g., feeding into Apollo/LinkedIn for contact scraping).
+
+---
+
+## 2. Users
+
+* **Sales/BD teams** → want lists of recently funded companies to prospect.
+* **Founders/analysts** → want alerts of new funding events.
+
+---
+
+## 3. Data Sources
+
+1. **SEC EDGAR Form D (US VC/private placements)**
+
+   * Bulk dataset + RSS polling.
+   * Fields: issuer name, date of first sale, amount raised, SIC/industry, location.
+
+2. **USAspending.gov API (US public contracts/grants/loans)**
+
+   * Endpoint: `/api/v2/search/spending_by_award/`
+   * Filter: `action_date >= today-3y`
+   * Fields: recipient name, UEI/DUNS, NAICS, description, award amount, agency.
+
+---
+
+## 4. Core Features
+
+### 4.1 Ingestion Layer
+
+* Scheduled crawlers/APIs per source.
+* Configurable **date window** (default = last 3 years).
+* Built with **n8n** or **Airflow** + lightweight scrapers (Scrapy/Playwright).
+* Respect rate limits (e.g., EDGAR 10 requests/sec).
+
+### 4.2 Normalization & Cleaning
+
+* Standardize fields: `company_name`, `funding_type`, `funding_amount`, `funding_date`, `source`, `country`, `industry`, `identifier` (UEI/DUNS/CIK/domain).
+* Parse/NER for company names in unstructured sources (RSS/news).
+* Normalize casing, strip whitespace, dedup across sources.
+
+### 4.3 Deduplication & Entity Resolution
+
+* Match by **UEI/DUNS/CIK** when available.
+* Otherwise resolve by `company_name + country + domain`.
+* Store `first_seen` and `last_seen`.
+
+### 4.4 Storage
+
+* **Database:** PostgreSQL with JSONB fields (or lightweight SQLite for MVP).
+* Optionally pgvector for fuzzy name matching.
+
+### 4.5 Output
+
+* **CSV export** of funded companies with unified schema.
+* Optional enrichment hooks (e.g., push to Apollo/CSV → LinkedIn scraping).
+* Dashboard/API for querying by industry, funding type, country.
+
+---
+
+## 5. Non-Functional Requirements
+
+* **Free/OSS only**: SEC/USAspending/SBIR/CORDIS APIs, RSS feeds.
+* **Extensible**: modular source connectors.
+* **Automated**: weekly or daily refresh.
+* **Legally compliant**: only use official open data & RSS feeds.
+
+---
+
+## 6. Success Criteria
+
+* System returns ≥ **95% of filings/awards** from official datasets for the last 3 years.
+* Deduplication reduces duplicate companies by ≥ **80%**.
+* Export contains at least **20k+ unique companies** with funding events in last 3 years.
+* Full export ready in < **10 minutes per run**.
+
+---
+
+## 7. Technical Stack
+
+* **Ingestion**: Python (requests, feedparser, Scrapy), n8n for orchestration.
+* **Parsing/NLP**: spaCy or regex.
+* **Storage**: PostgreSQL.
+* **Exports**: Pandas → CSV.
+* **Infra**: Docker-compose for portability.
+
+---
+
+## 8. Phased Rollout
+
+* **Phase 1 (MVP):** SEC Form D + USAspending + SBIR.
+* **Phase 2:** Add EU CORDIS + RSS feeds.
+* **Phase 3:** Add enrichment (domains → contacts).
+
+---

@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env and local data
+.env
+data/
+exports/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+

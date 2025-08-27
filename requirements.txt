@@ -1,0 +1,4 @@
+# Optional dependencies for orchestration and HTTP
+requests>=2.31.0
+apscheduler>=3.10.4
+

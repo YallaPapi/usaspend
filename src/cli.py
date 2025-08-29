@@ -10,7 +10,7 @@ from .scheduler import schedule_in_process
 from .storage import fetch_company_events, get_conn, init_db
 
 
-DEFAULT_SOURCES = ["sec", "usaspending", "sbir"]
+DEFAULT_SOURCES = ["usaspending"]
 
 
 def cmd_run(args: argparse.Namespace) -> None:
@@ -19,7 +19,10 @@ def cmd_run(args: argparse.Namespace) -> None:
 
 
 def cmd_schedule(args: argparse.Namespace) -> None:
-    sources = args.sources or DEFAULT_SOURCES
+    if args.sources:
+        sources = [s.strip() for s in args.sources]
+    else:
+        sources = DEFAULT_SOURCES
     schedule_in_process(sources=sources, cron=args.cron, interval_seconds=args.interval)
 
 
@@ -76,4 +79,3 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-

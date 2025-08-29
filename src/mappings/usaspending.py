@@ -46,8 +46,14 @@ def map_record_to_canonical(rec: Dict[str, Any]) -> Dict[str, Any]:
         or rec.get("Award Amount")
         or rec.get("total_obligation")
         or rec.get("obligation")
+        or rec.get("Transaction Amount")
     )
-    action_date = rec.get("action_date") or rec.get("Action Date")
+    action_date = (
+        rec.get("action_date")
+        or rec.get("Action Date")
+        or rec.get("Base Obligation Date")
+        or rec.get("Last Modified Date")
+    )
     country = (
         rec.get("recipient_country")
         or rec.get("Recipient Country")
@@ -63,7 +69,7 @@ def map_record_to_canonical(rec: Dict[str, Any]) -> Dict[str, Any]:
         or rec.get("generated_unique_award_id")
     )
     uei = rec.get("recipient_uei") or rec.get("Recipient UEI")
-    duns = rec.get("recipient_duns") or rec.get("Recipient DUNS")
+    duns = rec.get("recipient_duns") or rec.get("Recipient DUNS") or rec.get("Recipient DUNS Number")
 
     identifiers: Dict[str, Any] = {}
     if normalize_text(uei):
@@ -85,4 +91,3 @@ def map_record_to_canonical(rec: Dict[str, Any]) -> Dict[str, Any]:
 
 
 __all__ = ["map_record_to_canonical", "infer_funding_type"]
-

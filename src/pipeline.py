@@ -10,11 +10,11 @@ from .storage import add_funding_event, get_conn, init_db, log_ingest_run, upser
 
 def run_sources(sources: Iterable[str], window_years: int = 3) -> None:
     init_db()
-    end = datetime.utcnow().date()
-    start = (end.replace(year=end.year - window_years))
+    end_date = datetime.utcnow().date()
+    start_date = end_date.replace(year=end_date.year - window_years)
 
     for source in sources:
-        run_one_source(source, start, end)
+        run_one_source(source, start_date, end_date)
 
 
 def run_one_source(source: str, start_date, end_date) -> None:
@@ -24,10 +24,12 @@ def run_one_source(source: str, start_date, end_date) -> None:
     normalized = 0
     errors = None
     try:
+        print(f"[pipeline] Starting source='{source}' window={start_date}..{end_date}")
         if source not in CONNECTORS:
             raise ValueError(f"Unknown source: {source}")
         events = CONNECTORS[source](start_date, end_date)
         fetched = len(events)
+        print(f"[pipeline] Fetched events: {fetched}")
         with get_conn() as conn:
             for ev in events:
                 name = str(ev.get("company_name", "")).strip()
@@ -36,7 +38,10 @@ def run_one_source(source: str, start_date, end_date) -> None:
                 date = str(ev.get("funding_date"))
                 country = ev.get("country")
                 domain = (ev.get("identifier") or {}).get("domain")
-                cid = upsert_company(conn, name=name, country=country, seen_date=date, domain=domain)
+                identifiers = ev.get("identifier") or {}
+                # Remove domain from identifiers as it's handled separately
+                identifiers = {k: v for k, v in identifiers.items() if k != "domain"}
+                cid = upsert_company(conn, name=name, country=country, seen_date=date, domain=domain, identifiers=identifiers)
                 add_funding_event(
                     conn,
                     company_id=cid,
@@ -47,6 +52,8 @@ def run_one_source(source: str, start_date, end_date) -> None:
                     raw_id=ev.get("raw_id"),
                 )
                 normalized += 1
+                if normalized % 25 == 0:
+                    print(f"[pipeline] Normalized {normalized}/{fetched} so far…")
     except Exception as e:  # noqa: BLE001
         status = "failed"
         errors = str(e)
@@ -63,6 +70,7 @@ def run_one_source(source: str, start_date, end_date) -> None:
                 records_normalized=normalized,
                 errors=errors,
             )
+        print(f"[pipeline] Finished source='{source}' status={status} fetched={fetched} normalized={normalized}")
         if status != "success":
             err = send_email(
                 subject=f"Ingest failed: {source}",
@@ -70,4 +78,3 @@ def run_one_source(source: str, start_date, end_date) -> None:
             )
             if err:
                 print(err)
-

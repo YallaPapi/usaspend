@@ -21,3 +21,26 @@
 5. Reliability: retries/backoff/rate limits and idempotent reruns with run IDs.
 6. Optional: migrate to Postgres (SQLAlchemy + Alembic), add CI (pytest/ruff), and containerize.
 
+# Session Notes – 2025-08-29
+
+## Summary
+- USAspending: implemented real pagination grouped by award types (contracts, grants), added retries/backoff, and persisted raw API pages to `raw_ingest`.
+- Mapping: broadened field handling (e.g., `Recipient DUNS Number`, `Base Obligation Date`, `Last Modified Date`).
+- CLI: default `--sources` set to `usaspending` only for MVP.
+- Observability: added streaming logs in pipeline and connector to show group/page progress (`python -u`).
+- Tests: `pytest -q` passes (4 tests) locally.
+
+## Current Status
+- Live runs against USAspending succeed for payload validation in isolation, but end-to-end runs intermittently fail due to API constraints and connection drops (latest: `RemoteDisconnected`).
+- The connector now splits requests per award group and uses valid sort fields; further tuning needed for grants fields/sort and to trim initial window/pages to stabilize.
+
+## Next Steps (MVP)
+1. Add connector logs per page/group (done). Reduce initial window to 90 days and `USASPENDING_MAX_PAGES=1..2` to validate live ingest.
+2. Finalize grants field list/sort to avoid 400s in all cases; verify at least one page returns records in each group.
+3. Rerun: `python -u -m src.cli run --sources usaspending --window-years 1` (adjust window via env/flag if needed).
+4. Verify DB: check `ingest_runs` and sample events in `funding_events`; confirm in UI: `python -u -m uvicorn src.web:app --reload --port 8000`.
+5. Document runbook commands and minimal `.env` (SMTP optional; set later).
+
+## Commands
+- Ingest: `USASPENDING_MAX_PAGES=1 python -u -m src.cli run --sources usaspending --window-years 1`
+- Web UI: `python -u -m uvicorn src.web:app --reload --host 0.0.0.0 --port 8000`
